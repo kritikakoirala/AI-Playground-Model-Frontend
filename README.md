@@ -13,7 +13,7 @@ This is the frontend client for the **AI Playground** project, built with [Next.
 
 | Service  | URL                                                                            |
 | -------- | ------------------------------------------------------------------------------ |
-| Frontend | [https://ai-playground-frontend.vercel.app](https://ai-playground-frontend.vercel.app) |
+| Frontend | [https://ai-playground-model-frontend.vercel.app/](https://ai-playground-model-frontend.vercel.app/) |
 | Backend  | [https://ai-playground-model-backend-production.up.railway.app](https://ai-playground-model-backend-production.up.railway.app) |
 
 > Make sure the backend URL is set correctly in your environment variables to enable proper API communication.
