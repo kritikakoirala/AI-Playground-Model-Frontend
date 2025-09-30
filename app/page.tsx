@@ -12,6 +12,7 @@ interface SessionType{
 
 
 let BACKEND_URL = 'https://ai-playground-model-backend-production.up.railway.app'
+
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -47,57 +48,56 @@ export default function Home() {
 
     const data = await res.json();
     const id = data ? data.sessionId: '';
-
     data!==undefined && setSessionId(id);
 
-
-    // console.log("@id", id)
     if(id!==undefined){
+      handleEvents(id)
+    }else{
+      setIsLoading({type:"prompt", loading:false})
+      setErrorMsg("Something Went Wrong. Please try again later")
+    }
+  };
+
+  const handleEvents = (id:string) =>{
+
+    // Initialize an event source to fetch the data of a particular stream of a session
     const evtSource = new EventSource(`${BACKEND_URL}/sessions/stream/${id}`);
     eventSourceRef.current = evtSource;
 
-    
+    //  This function handles the entire process of when the data is being emitted to the frontend in a stream  
     evtSource.onmessage = (event) => {
-
       setIsLoading({type:"prompt", loading:false});
-
       const parsed = JSON.parse(event.data);
-
       const { model, chunk } = parsed;
-
+      // When the stream starts, set the status to streaming
       setStatuses((prev) => ({
-            ...prev,
-            [model]: 'streaming',
+        ...prev,
+        [model]: 'streaming',
       }));
-
       // Append chunk to model's content
       setModels((prev) => ({
         ...prev,
         [model]: (prev[model] || '') + chunk,
       }));
-
-      
     };
 
+    // This event is called when the stream end
     evtSource.addEventListener('end', () => {
-
-    Object.keys(models).forEach(model => {
-        setStatuses(prev => ({
-        ...prev,
-        [model]: 'complete',
-      }));
-    })
-
+      // Set the status to complete when the stream end regardless of success or failure
+      Object.keys(models).forEach(model => {
+          setStatuses(prev => ({
+          ...prev,
+          [model]: 'complete',
+        }));
+      })
       setPrompt("")
-  
       evtSource.close();
     });
 
-    
+    //This event handles the metrics that is being passed to the frontend along with the prompt results text
     evtSource.addEventListener('metrics', (event) => {
       const data = JSON.parse(event.data);
-      console.log("@metrics", metrics)
-      // console.log("@data", data)
+      // For each model and their metrics, after the data is parsed, set the status to complete indicating the end of the metric flow
       setStatuses(prev => {
         const newStatuses = { ...prev };
         Object.keys(data).forEach(model => {
@@ -109,42 +109,35 @@ export default function Home() {
       setMetrics(data);
     });
 
+    // This event handles the error happening during this entire process
     evtSource.addEventListener('error', (event: MessageEvent) => {
 
       setIsLoading({type:"prompt", loading:false})
-      
       const errorData = JSON.parse(event.data);
-       const { model, message } = errorData;
-
+      const { model, message } = errorData;
       setStatuses((prev) => ({
         ...prev,
         [model]: 'error',
       }));
-
       setModels((prev) => ({
         ...prev,
         [model]: `[Error]: ${message}`,
       }));
 
       setErrorMsg(message); // Optional, for global error UI
-        });
-    } else{
-      setIsLoading({type:"prompt", loading:false})
-      setErrorMsg("Something Went Wrong. Please try again later")
-    }
-
-  };
+    });
+  }
 
 
-  // console.log("@models", models)
-
+/**
+ * 
+ * @param id Indivial session to see
+ */
   const loadSession = async (id: string) => {
-    // setIsLoading(true);
     setModels({});
     const res = await fetch(`${BACKEND_URL}/sessions/${id}`);
     const data = await res.json();
 
-    // console.log(data)
     setPrompt(data.prompt);
     setSessionId(data._id);
     setMetrics(data?.metricsPerModel)
@@ -153,19 +146,15 @@ export default function Home() {
     const newModels: Record<string, string> = {};
     const responses = data.responsePerModel || {};
 
-    // console.log(responses)
     for (const model of data.models || []) {
       newModels[model] = responses[model] || '[No Response]';
     }
-
     setModels(newModels);
-   
   };
 
 
   const loadAllSessions = async () =>{
     setIsLoading({type:"sessions", loading:true});
-
     const res = await fetch(`${BACKEND_URL}/sessions`);
     const data = await res.json();
     setIsLoading({type:"sessions", loading:false});
@@ -174,20 +163,21 @@ export default function Home() {
 
 
   return (
-   <div className='w-full min-h-screen bg-[#434343] flex '>    
-    <div className='flex flex-col bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1] justify-center items-center gap-y-10  pt-0 px-10 '> 
-      <h1 className='text-2xl text-center tracking-wide'> AI Model Playground  </h1>
-       <div className=' '> 
-       
+   <div className='w-full min-h-screen bg-[#434343] flex flex-col md:flex-row'>  
 
-          <button
+      {/* Left side */}
+    <div className='flex py-20  flex-col bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1] justify-start  items-center gap-y-10  px-10 '> 
+      <h1 className='text-2xl text-center tracking-wide'> AI Model Playground  </h1>
+      <div> 
+
+        <button
           className={`py-3 cursor-pointer px-6 text-sm font-medium transition-colors duration-150 ${
             showTab === 'prompt'
               ? 'border-b-2 border-blue-600 text-blue-600'
               : 'text-gray-500 hover:text-blue-600'
           }`}
-          onClick={() => {setShowTab('prompt'), setSessions([]),   setModels({});
-}}
+            onClick={() => {setShowTab('prompt'), setSessions([]),   setModels({});
+            }}
         >
           Prompt
         </button>
@@ -198,28 +188,24 @@ export default function Home() {
               : 'text-gray-500 hover:text-blue-600'
           }`}
           onClick={() => {setShowTab('sessions'), loadAllSessions(),   setModels({}), setPrompt("");
-}}
+          }}
         >
           Sessions
         </button>
             
-        </div>
+      </div>
+      {
+        showTab==='prompt' ? 
 
-
-        {
-          showTab==='prompt' ? 
-
-          <>
-            <div className='text-center bg-white mx-auto w-[25vw] py-10 px-4 rounded-lg shadow-[0_2px_2px_rgba(0,0,0,0.3)]'> 
-        
-          <textarea
-              rows={4}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your prompt here..."
-              className='w-full'
-              // style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
-          />
+        <>
+        <div className='text-center bg-white mx-auto w-full md:w-[25vw] py-10 px-4 rounded-lg shadow-[0_2px_2px_rgba(0,0,0,0.3)]'> 
+            <textarea
+                rows={4}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Enter your prompt here..."
+                className='w-full'
+            />
         </div>    
         <button
           onClick={()=>handleSubmit()} 
@@ -229,114 +215,114 @@ export default function Home() {
           >
             Generate Response
         </button>
-          </>
-          :
+        </>
+        :
 
-          <div className='h-[360px] w-[25vw] bg-white rounded-xl overflow-hidden shadow-[0_2px_2px_rgba(0,0,0,0.4)]'>
+        <div className='h-[360px] w-[25vw] bg-white rounded-xl overflow-hidden shadow-[0_2px_2px_rgba(0,0,0,0.4)]'>
 
-            <div className=' h-full  overflow-y-scroll'>
+          <div className=' h-full  overflow-y-scroll'>
 
-              {
-                isLoading?.type==='sessions' && isLoading?.loading ?
+            {
+              isLoading?.type==='sessions' && isLoading?.loading ?
 
-                <Loading />
-                : 
+              <Loading />
+              : 
+              
+              // models[mode]
+              sessions?.length>0 ? 
+              sessions?.map((session)=>{
+                // console.log(session)
+                return (
                 
-                // models[mode]
-                sessions?.map((session)=>{
-                  // console.log(session)
-                  return (
-                  
-                     <div
-                      key={session?._id }
-                      className="cursor-pointer hover:bg-gray-100 p-4  my-3 border-b last:border-b-0"
-                      onClick={() => loadSession(session?._id)}
-                    >
-                      <strong>Prompt:</strong> {session?.prompt.length > 50 ? session?.prompt.slice(0, 50) + '...' : session?.prompt}
-                      <br />
-                      <small className="text-gray-500">ID: {session?._id.slice(-6)}</small>
-                    </div>
-                  )
-                })
-              }
-            </div>
-
-
+                    <div
+                    key={session?._id }
+                    className="cursor-pointer hover:bg-gray-100 p-4  my-3 border-b last:border-b-0"
+                    onClick={() => loadSession(session?._id)}
+                  >
+                    <strong>Prompt:</strong> {session?.prompt.length > 50 ? session?.prompt.slice(0, 50) + '...' : session?.prompt}
+                    <br />
+                    <small className="text-gray-500">ID: {session?._id.slice(-6)}</small>
+                  </div>
+                )
+              })
+              :
+              <p className='text-black font-semibold text-center py-10'>Generate a Prompt to start a session</p>
+            }
           </div>
-        }
+
+
+        </div>
+      }
 
         
     </div>
 
+      {/* Right side */}
+    <div className='flex-1 p-10'> 
 
-      <div className='flex-1 p-10 '> 
-        {/* <h1> See the results here</h1> */}
+      {
+      Object.keys(models).length === 0 ? (
+          isLoading?.type==='prompt' && isLoading?.loading?
+          <Loading className="text-white justify-center items-center"/>:
+        <div className="h-full text-white text-md flex text-center justify-center items-center text-lg tracking-wide">
+          Submit a prompt or select a session to see results.
+        </div>
+      )
+      :
+      <div className='flex flex-wrap gap-5 gap-y-20 pt-6'> 
+        {
+          isLoading?.type==='prompt' && isLoading?.loading?
+          <Loading className="text-white justify-center items-center"/>
+          :
 
-        {Object.keys(models).length === 0 ? (
-           isLoading?.type==='prompt' && isLoading?.loading?
-            <Loading className="text-white justify-center items-center"/>:
-          <div className="h-full text-white text-md flex text-center justify-center items-center text-lg tracking-wide">
-            Submit a prompt or select a session to see results.
-          </div>
-
-        )
-        :
-        <div className='flex flex-wrap gap-5 pt-6' > 
-        
-          {
-            isLoading?.type==='prompt' && isLoading?.loading?
-            <Loading className="text-white justify-center items-center"/>
-            :
-
-            // models[model]
-            Object.keys(models).map((model, index) => (
-              <div className='flex flex-col mx-auto' key={index}>
-                <div className='w-[400px] h-[400px] rounded-2xl  overflow-hidden'>
-                  <div className="bg-white p-10  h-full  overflow-y-scroll shadow-[0_2px_2px_rgba(0,0,0,0.4)]" key={model}>
-                      <p className="font-semibold ">
-                        Model:{' '}
-                        {model}</p>
+          Object.keys(models).map((model, index) => (
+            <div className='flex flex-col mx-auto' key={index}>
+              <div className='w-[400px] h-[400px] rounded-2xl  overflow-hidden'>
+                <div className="bg-white p-10  h-full  overflow-y-scroll shadow-[0_2px_2px_rgba(0,0,0,0.4)]" key={model}>
+                    <p className="font-semibold ">
+                      Model:{' '}
+                      {model}</p>
 
                       <p className="border-b text-sm mb-1 mb-5 py-4">
-                          <strong>Status:</strong>{' '}
+                        <strong>Status:</strong>{' '}
 
-                          <span className='bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1] px-3 font-semibold  py-1 rounded-3xl'>{statuses[model]}  </span>
-                          
-                        </p>
-
-                      <p className={`whitespace-pre-wrap text-sm mb-3 text-justify text-sm ${statuses[model]==='error'?'text-red-800 ':'text-black'} `}>
-                        {statuses[model]==='complete' && (models[model] === ' ' || !models[model])
-                          ? <span className="text-red-500 font-semibold">Sorry, we couldn't generate the respose you wanted. Hit Refresh and Try again.</span>
-                          :
-                           
-                          models[model]}
+                        <span className='bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1] px-3 font-semibold  py-1 rounded-3xl'>{statuses[model]}  </span>
+                        
                       </p>
 
-                    
-                </div>
-              </div>
-              {
-              statuses[model] === 'streaming'?
-                <p className='text-white text-sm font-bold uppercase py-10 tracking-wide'> Wait for the metrics to load... </p>
-              :
-              metrics[model] && (
-                <div className="
-                text-gray-600 mt-6 border-t  bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1]
-                  w-auto p-5 rounded-2xl space-y-2 text-md 
-                ">
-                  <p><strong>Time:</strong> {(metrics[model]?.durationMs / 1000)?.toFixed(2)}s</p>
-                  <p><strong>Tokens Used:</strong> {metrics[model]?.tokens}</p>
-                  <p><strong>Cost:</strong> ${metrics[model]?.cost?.toFixed(5)}</p>
-                </div>
-              )}
-              </div>
+                    <p className={`whitespace-pre-wrap text-sm mb-3 text-justify text-sm ${statuses[model]==='error'?'text-red-800 ':'text-black'} `}>
+                      {statuses[model]==='complete' && (models[model] === ' ' || !models[model])
+                        ? <span className="text-red-500 font-semibold">Sorry, we couldn't generate the respose you wanted. Hit Refresh and Try again.</span>
+                        :
+                        
+                        models[model]}
+                    </p>
 
-            ))
-        }
-        </div>
+                  
+              </div>
+            </div>
+            {
+            statuses[model] === 'streaming'?
+              <p className='text-white text-sm font-bold uppercase py-10 tracking-wide'> Wait for the metrics to load... </p>
+            :
+            metrics[model] && (
+              <div className="
+              text-gray-600 mt-6 border-t  bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1]
+                w-auto p-5 rounded-2xl space-y-2 text-md 
+              ">
+                <p><strong>Time:</strong> {(metrics[model]?.durationMs / 1000)?.toFixed(2)}s</p>
+                <p><strong>Tokens Used:</strong> {metrics[model]?.tokens}</p>
+                <p><strong>Cost:</strong> ${metrics[model]?.cost?.toFixed(5)}</p>
+              </div>
+            )}
+            </div>
 
+          ))
       }
       </div>
+
+    }
+    </div>
   
     </div>
 
