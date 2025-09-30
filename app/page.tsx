@@ -174,7 +174,7 @@ export default function Home() {
 
 
   return (
-   <div className='w-full h-screen bg-[#434343] flex '>    
+   <div className='w-full min-h-screen bg-[#434343] flex '>    
     <div className='flex flex-col bg-linear-to-r from-[#A8E6CF] to-[#DCEDC1] justify-center items-center gap-y-10  pt-0 px-10 '> 
       <h1 className='text-2xl text-center tracking-wide'> AI Model Playground  </h1>
        <div className=' '> 
