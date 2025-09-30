@@ -1,54 +1,78 @@
-# AI Playground Frontend
-
 <p align="center">
-  <a href="https://nextjs.org/" target="_blank"><img src="https://nextjs.org/static/favicon/favicon-32x32.png" width="50" alt="Next.js Logo" /></a>
+  <a href="https://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-## Description
+<p align="center">A scalable and extensible NestJS backend for an AI Model Playground</p>
 
-This is the frontend client for the **AI Playground** project, built with [Next.js](https://nextjs.org/). It interacts with the backend AI model APIs to provide streaming chat and token usage metrics.
-
-
-## Live Deployments
-
-| Service  | URL                                                                            |
-| -------- | ------------------------------------------------------------------------------ |
-| Frontend | [https://ai-playground-model-frontend.vercel.app/](https://ai-playground-model-frontend.vercel.app/) |
-| Backend  | [https://ai-playground-model-backend-production.up.railway.app](https://ai-playground-model-backend-production.up.railway.app) |
-
-> Make sure the backend URL is set correctly in your environment variables to enable proper API communication.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@nestjs/core" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+  <a href="https://www.npmjs.com/package/@nestjs/core" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+  <a href="https://github.com/your-username/ai-playground-backend" target="_blank"><img src="https://img.shields.io/github/stars/your-username/ai-playground-backend?style=social" alt="GitHub stars" /></a>
+</p>
 
 ---
 
-## Features
+## 🧠 AI Model Playground — Frontend
 
-- Streaming AI response display.
-- Token usage and cost metrics.
-- Multi-model support with error handling.
-- Responsive UI with real-time updates.
-- Supports switching prompts without page reload.
+This is the frontend for the AI Model Playground built using **NextJS** and **Tailwind**, supporting real-time prompt streaming and comparison across different OpenRouter models.
 
 ---
 
-## Getting Started
+## 📦 Features
 
-These instructions will help you set up the project locally.
-## Clone the repo
+- Prompt submission & session storage
+- Streamed AI model response via Server-Sent Events (SSE)
+- Per-model metrics (time, cost, tokens)
+- Session history support
+- CORS configuration for frontend integration
+- Modular NestJS architecture
+
+---
+
+## 📡 Live Deployment
+
+> 🟢 **Backend URL**: [https://ai-playground-model-backend-production.up.railway.app](https://ai-playground-model-backend-production.up.railway.app)
+
+> 🟢 **Frontend URL**: [https://ai-playground-model-frontend.vercel.app/](https://ai-playground-model-frontend.vercel.app/)
+
+
+---
+
+## 🚀 Getting Started
+
+### 📁 Clone the repository
 
 ```bash
-git clone https://github.com/kritikakoirala/AI-Playground-Model-Frontend.git
+git clone https://github.com/kritikakoirala/ai-playground-frontend.git
 
-First, run the development server:
+## Project setup
 
 ```bash
-npm install
-
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+$ npm install
 ```
----
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
