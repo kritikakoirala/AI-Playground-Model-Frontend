@@ -138,7 +138,7 @@ export default function Home() {
     const res = await fetch(`${BACKEND_URL}/sessions/${id}`);
     const data = await res.json();
 
-    setPrompt(data.prompt);
+    // setPrompt(data.prompt);
     setSessionId(data._id);
     setMetrics(data?.metricsPerModel)
     setStatuses(data?.statusPerModel)
@@ -150,6 +150,7 @@ export default function Home() {
       newModels[model] = responses[model] || '[No Response]';
     }
     setModels(newModels);
+    setPrompt("")
   };
 
 
@@ -158,6 +159,7 @@ export default function Home() {
     const res = await fetch(`${BACKEND_URL}/sessions`);
     const data = await res.json();
     setIsLoading({type:"sessions", loading:false});
+    setPrompt("")
     setSessions(data);
   }
 
